@@ -23,9 +23,10 @@ switch. Only API version 2 is accepted.
 | `APPRENTICESHIPS_BASE_URL` | DfE vacancies URL | Provider endpoint |
 | `APPRENTICESHIPS_API_KEY` | none | Secret subscription key |
 | `APPRENTICESHIPS_API_VERSION` | `2` | `X-Version` header |
-| `APPRENTICESHIPS_PAGE_SIZE` | `100` | Provider page size |
+| `APPRENTICESHIPS_SYNC_PAGE_SIZE` | `100` | Provider page size |
 | `APPRENTICESHIPS_SYNC_DELAY_MS` | `900000` | Refresh interval |
-| `APPRENTICESHIPS_MAX_PAGES` | `150` | Bounded refresh limit |
+| `APPRENTICESHIPS_SYNC_MAX_PAGES` | `150` | Bounded refresh limit |
+| `APPRENTICESHIPS_INITIAL_SYNC_DELAY_MS` | `1000` | Initial refresh delay |
 
 ## Local verification
 
