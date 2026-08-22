@@ -1,0 +1,6 @@
+package com.jobseekercopilot.apprenticeshipsgateway.client;
+
+import com.jobseekercopilot.apprenticeshipsgateway.model.ApprenticeshipsSearchRequest;
+import com.jobseekercopilot.apprenticeshipsgateway.model.ApprenticeshipsSearchResponse;
+
+public interface ApprenticeshipsProviderClient { ApprenticeshipsSearchResponse search(ApprenticeshipsSearchRequest request); }

@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: apprenticeships-gateway
+
+server:
+  port: ${SERVER_PORT:8105}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+apprenticeships:
+  base-url: ${APPRENTICESHIPS_BASE_URL:https://api.apprenticeships.education.gov.uk/vacancies}
+  api-key: ${APPRENTICESHIPS_API_KEY:}
+  api-version: ${APPRENTICESHIPS_API_VERSION:2}
+  enabled: ${APPRENTICESHIPS_ENABLED:true}
+  page-size: ${APPRENTICESHIPS_SYNC_PAGE_SIZE:100}
+  max-pages: ${APPRENTICESHIPS_SYNC_MAX_PAGES:150}
+  sync-delay-ms: ${APPRENTICESHIPS_SYNC_DELAY_MS:900000}
+  initial-delay-ms: ${APPRENTICESHIPS_INITIAL_SYNC_DELAY_MS:1000}
+
+external-provider:
+  mode: ${EXTERNAL_PROVIDER_MODE:FIXTURE}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{correlationId}] [%thread] %logger{36} - %msg%n"
+  level:
+    com.jobseekercopilot: ${APP_LOG_LEVEL:INFO}
+    org.springframework.web.reactive.function.client.ExchangeFunctions: WARN
