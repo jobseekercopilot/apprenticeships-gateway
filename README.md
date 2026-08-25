@@ -26,6 +26,7 @@ switch. Only API version 2 is accepted.
 | `APPRENTICESHIPS_SYNC_PAGE_SIZE` | `100` | Provider page size |
 | `APPRENTICESHIPS_SYNC_DELAY_MS` | `900000` | Refresh interval |
 | `APPRENTICESHIPS_SYNC_MAX_PAGES` | `150` | Bounded refresh limit |
+| `APPRENTICESHIPS_MAX_IN_MEMORY_RESPONSE_BYTES` | `2097152` | Bounded provider response decode limit (512 KiB to 8 MiB) |
 | `APPRENTICESHIPS_INITIAL_SYNC_DELAY_MS` | `1000` | Initial refresh delay |
 
 ## Local verification
