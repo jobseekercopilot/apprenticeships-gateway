@@ -7,19 +7,33 @@ import com.jobseekercopilot.apprenticeshipsgateway.model.ApprenticeshipVacancy;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.buffer.DataBufferLimitException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Component
 public class DfeDisplayAdvertClient {
+    private static final Logger log = LoggerFactory.getLogger(DfeDisplayAdvertClient.class);
+
     private final ApprenticeshipsProperties properties;
     private final WebClient webClient;
+
     public DfeDisplayAdvertClient(ApprenticeshipsProperties properties) {
         this.properties = properties;
-        this.webClient = WebClient.builder().baseUrl(properties.getBaseUrl()).build();
+        this.webClient = WebClient.builder()
+                .baseUrl(properties.getBaseUrl())
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .codecs(codecs -> codecs.defaultCodecs()
+                        .maxInMemorySize(properties.getMaxInMemoryResponseBytes()))
+                .build();
     }
+
     public DfeVacancyPage fetchPage(int page) {
         try {
             JsonNode body = webClient.get().uri(builder -> builder.path("/vacancy")
@@ -32,14 +46,37 @@ public class DfeDisplayAdvertClient {
             body.path("vacancies").forEach(node -> vacancies.add(map(node)));
             return new DfeVacancyPage(List.copyOf(vacancies), integer(body, "total"), integer(body, "totalFiltered"), integer(body, "totalPages"));
         } catch (WebClientResponseException.TooManyRequests exception) {
+            logFailure("RATE_LIMIT", exception.getStatusCode().value());
             throw new DfeProviderException("DfE Display Advert API rate limit reached", HttpStatus.TOO_MANY_REQUESTS);
         } catch (WebClientResponseException exception) {
             HttpStatus status = exception.getStatusCode() == HttpStatus.UNAUTHORIZED || exception.getStatusCode() == HttpStatus.FORBIDDEN
                     ? HttpStatus.valueOf(exception.getStatusCode().value()) : HttpStatus.SERVICE_UNAVAILABLE;
+            logFailure(status == HttpStatus.SERVICE_UNAVAILABLE ? "HTTP_RESPONSE" : "AUTHENTICATION",
+                    exception.getStatusCode().value());
             throw new DfeProviderException("DfE Display Advert API request failed", status);
-        } catch (DfeProviderException exception) { throw exception; }
-        catch (RuntimeException exception) { throw new DfeProviderException("DfE Display Advert API request failed", HttpStatus.SERVICE_UNAVAILABLE); }
+        } catch (DfeProviderException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            logFailure(containsCause(exception, DataBufferLimitException.class)
+                    ? "RESPONSE_CODEC_LIMIT" : "TRANSPORT_OR_DECODE", null);
+            throw new DfeProviderException("DfE Display Advert API request failed", HttpStatus.SERVICE_UNAVAILABLE);
+        }
     }
+
+    private void logFailure(String category, Integer status) {
+        log.warn("DfE Display Advert API request failed category={} status={} maxInMemoryResponseBytes={}",
+                category, status == null ? "unavailable" : status, properties.getMaxInMemoryResponseBytes());
+    }
+
+    private boolean containsCause(Throwable throwable, Class<? extends Throwable> type) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (type.isInstance(current)) return true;
+            current = current.getCause();
+        }
+        return false;
+    }
+
     private ApprenticeshipVacancy map(JsonNode node) {
         List<ApprenticeshipAddress> addresses = new ArrayList<>();
         node.path("addresses").forEach(address -> addresses.add(new ApprenticeshipAddress(text(address,"addressLine1"), text(address,"addressLine2"),
